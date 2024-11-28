@@ -8,14 +8,14 @@ import { Balance } from 'src/balance/balance.model';
 export class UsersService {
   constructor(@InjectModel(User) private usersRepository: typeof User) {}
 
-  async createUser(dto: CreateUserDto): Promise<User | HttpException> {
+  async createUser(dto: CreateUserDto): Promise<User> {
     try {
       const existingUser = await this.usersRepository.findOne({
         where: { login: dto.login },
       });
 
       if (existingUser) {
-        return new HttpException('User already exists', 400);
+        throw new HttpException('User already exists', 400);
       }
 
       const user = await this.usersRepository.create(dto);
@@ -33,11 +33,11 @@ export class UsersService {
       return userWithBalance;
     } catch (e) {
       console.error(e);
-      return new BadRequestException();
+      throw new BadRequestException();
     }
   }
 
-  async getAllUsers(): Promise<User[] | HttpException> {
+  async getAllUsers(): Promise<User[]> {
     try {
       const users = await this.usersRepository.findAll({
         include: {
@@ -48,7 +48,7 @@ export class UsersService {
       return users;
     } catch (e) {
       console.log(e);
-      return new BadRequestException();
+      throw new BadRequestException();
     }
   }
 

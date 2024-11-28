@@ -1,4 +1,12 @@
-import { Controller, Get, Param, Body, Post, UseGuards, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Body,
+  Post,
+  UseGuards,
+  Logger,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BalanceService } from './balance.service';
 import { UpdateBalanceDto } from './dto/update-balance.dto';

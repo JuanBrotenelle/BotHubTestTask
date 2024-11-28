@@ -2,6 +2,8 @@ import {
   Injectable,
   UnauthorizedException,
   HttpException,
+  HttpStatus,
+  HttpCode,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -15,14 +17,14 @@ export class AuthService {
     private usersService: UsersService,
   ) {}
 
-  async login(userDto: CreateUserDto): Promise<string | HttpException> {
+  async login(userDto: CreateUserDto): Promise<string> {
     try {
       const user = await this.usersService.findOne(userDto);
 
       const passwordEquals = await bcrypt.compare(userDto.pwd, user.pwd);
 
       if (!passwordEquals) {
-        return new UnauthorizedException();
+        throw new UnauthorizedException();
       }
 
       const payload = { login: user.login, id: user.id, role: user.role };
@@ -33,16 +35,16 @@ export class AuthService {
       if (e instanceof HttpException) {
         throw e;
       }
-      return new HttpException('User not found', 404);
+      throw new HttpException('User not found', 404);
     }
   }
 
-  async register(userDto: CreateUserDto): Promise<HttpException> {
+  async register(userDto: CreateUserDto): Promise<object> {
     try {
       const user = await this.usersService.findOne(userDto);
 
       if (user) {
-        return new HttpException('User already exists', 400);
+        throw new HttpException('User already exists', 400);
       }
 
       const hashPassword = await bcrypt.hash(userDto.pwd, 5);
@@ -52,13 +54,13 @@ export class AuthService {
       });
 
       if (!createdUser) {
-        return new HttpException('User not created', 400);
+        throw new HttpException('User not created', 400);
       }
 
-      return new HttpException('User created', 201);
+      return HttpCode(HttpStatus.CREATED);
     } catch (e) {
       console.log(e);
-      return new HttpException('User not found', 404);
+      throw new HttpException('User not found', 404);
     }
   }
 }

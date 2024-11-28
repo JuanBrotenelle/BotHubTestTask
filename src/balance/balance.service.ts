@@ -37,4 +37,28 @@ export class BalanceService {
       return new BadRequestException();
     }
   }
+
+  async aiTokenBuy(userId: number, value: number): Promise<object> {
+    try {
+      const balance = await this.balanceRepository.findOne({
+        where: { userId },
+      });
+
+      if (!balance) {
+        throw new HttpException('Balance not found', 404);
+      }
+
+      if (balance.value < value) {
+        throw new HttpException('Not enough money', 400);
+      }
+
+      balance.value -= value;
+      balance.save();
+
+      return { value: balance.value };
+    } catch (e) {
+      console.log(e);
+      throw new BadRequestException();
+    }
+  }
 }

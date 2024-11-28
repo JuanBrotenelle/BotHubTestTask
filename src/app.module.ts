@@ -1,4 +1,4 @@
-import { Module, Logger } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
@@ -8,6 +8,7 @@ import { User } from './users/users.model';
 import { Balance } from './balance/balance.model';
 import { LoggerModule } from './logger/logger.module';
 import { PinoLoggerService } from './logger/pino-logger.service';
+import { AiManagerModule } from './ai-manager/ai-manager.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { PinoLoggerService } from './logger/pino-logger.service';
     BalanceModule,
     AuthModule,
     LoggerModule,
+    AiManagerModule,
   ],
   controllers: [],
   providers: [],
