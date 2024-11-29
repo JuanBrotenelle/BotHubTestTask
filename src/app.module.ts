@@ -12,7 +12,7 @@ import { AiManagerModule } from './ai-manager/ai-manager.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ envFilePath: '.env' }),
+    ConfigModule.forRoot({ envFilePath: '.env', isGlobal: true }),
     SequelizeModule.forRootAsync({
       imports: [LoggerModule],
       inject: [PinoLoggerService],

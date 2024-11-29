@@ -15,30 +15,7 @@ export class BalanceService {
     });
   }
 
-  async updateBalance(
-    userId: number,
-    value: number,
-  ): Promise<object | HttpException> {
-    try {
-      const balance = await this.balanceRepository.findOne({
-        where: { userId },
-      });
-
-      if (!balance) {
-        return new HttpException('Balance not found', 404);
-      }
-
-      balance.value = value;
-      balance.save();
-
-      return { value: balance.value };
-    } catch (e) {
-      console.log(e);
-      return new BadRequestException();
-    }
-  }
-
-  async aiTokenBuy(userId: number, value: number): Promise<object> {
+  async updateBalance(userId: number, value: number): Promise<object> {
     try {
       const balance = await this.balanceRepository.findOne({
         where: { userId },
@@ -48,14 +25,34 @@ export class BalanceService {
         throw new HttpException('Balance not found', 404);
       }
 
-      if (balance.value < value) {
+      balance.value = value;
+      balance.save();
+
+      return { value: balance.value };
+    } catch (e) {
+      console.log(e);
+      throw new BadRequestException();
+    }
+  }
+
+  async aiTokenBuy(streamId: string, value: number): Promise<void> {
+    try {
+      const userId = streamId.split('-')[0];
+
+      const balance = await this.balanceRepository.findOne({
+        where: { userId },
+      });
+
+      if (!balance) {
+        throw new HttpException('Balance not found', 404);
+      }
+
+      if (balance.value <= 0) {
         throw new HttpException('Not enough money', 400);
       }
 
       balance.value -= value;
       balance.save();
-
-      return { value: balance.value };
     } catch (e) {
       console.log(e);
       throw new BadRequestException();
