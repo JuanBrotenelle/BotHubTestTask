@@ -28,11 +28,10 @@ export class BalanceController {
   private readonly logger = new Logger(BalanceController.name);
   constructor(private balanceService: BalanceService) {}
 
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Получение баланса' })
-  @ApiHeader({ name: 'Authorization', required: true })
   @ApiResponse({ status: 200, example: { value: 100 } })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  @ApiQuery({ name: 'id', example: 1 })
   @UseGuards(AuthGuard)
   @Get(':id')
   getBalance(@Param('id') id: number) {
@@ -40,11 +39,11 @@ export class BalanceController {
     return this.balanceService.getBalance(id);
   }
 
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Изменение баланса - Доступ у администратора' })
-  @ApiHeader({ name: 'Authorization', required: true })
-  @ApiQuery({ name: 'id', example: 1 })
   @ApiResponse({ status: 200, example: { value: 100 } })
   @ApiResponse({ status: 404, example: 'Balance not found' })
+  @ApiResponse({ status: 403, example: 'Forbidden resource' })
   @ApiResponse({ status: 400, example: 'Bad request' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard)

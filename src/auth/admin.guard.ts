@@ -8,15 +8,20 @@ import { JwtService } from '@nestjs/jwt';
 import { Observable } from 'rxjs';
 import { UsersService } from 'src/users/users.service';
 
+interface UserRep {
+  role: string;
+  id: number;
+  login: string;
+  pwd: string;
+}
+
 @Injectable()
 export class AdminGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private usersRepository: UsersService,
   ) {}
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
     try {
       const authHeader = req.headers.authorization;
@@ -24,9 +29,9 @@ export class AdminGuard implements CanActivate {
 
       const user = this.jwtService.decode(token);
 
-      if (user.role !== 'admin') {
-        throw new UnauthorizedException();
-      }
+      const userRep: UserRep = await this.usersRepository.findOne(user);
+
+      if (userRep.role !== 'admin') return false;
 
       return true;
     } catch (e) {

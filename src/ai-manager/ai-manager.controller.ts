@@ -1,20 +1,11 @@
-import {
-  Body,
-  Controller,
-  Logger,
-  Post,
-  Sse,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Post, Res, UseGuards, Logger } from '@nestjs/common';
+import { Response } from 'express';
 import { AiManagerService } from './ai-manager.service';
 import { ReqMessageDto } from './dto/req-message.dto';
-import { SseUserGuard } from 'src/auth/sse-user.guard';
 import { AuthGuard } from 'src/auth/jwt-auth.guard';
 import {
-  ApiHeader,
+  ApiBearerAuth,
   ApiOperation,
-  ApiQuery,
   ApiResponse,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -27,28 +18,50 @@ export class AiManagerController {
 
   constructor(private readonly aiService: AiManagerService) {}
 
-  @ApiOperation({ summary: 'Отправка промпта с моделью' })
-  @ApiHeader({ name: 'Authorization', required: true })
-  @ApiResponse({ status: 200, example: { streamId: '5-1732887598350' } })
-  @ApiResponse({ status: 404, example: 'Model not found' })
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Отправка промпта с моделью и получение ответа в реальном времени',
+  })
+  @ApiResponse({ status: 200, description: 'Стрим ответа' })
   @ApiResponse({ status: 403, example: 'Your balance is less than 0' })
-  @ApiResponse({ status: 400, example: 'Stream already in progress' })
+  @ApiResponse({ status: 404, example: 'Model not found' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard)
-  @Post('generate')
-  generate(@Body() dto: ReqMessageDto) {
-    return this.aiService.generate(dto);
-  }
+  @Post('generate-stream')
+  async generateStream(
+    @Body() dto: ReqMessageDto,
+    @Res() res: Response,
+    @Res() req: Response,
+  ): Promise<void> {
+    const streamId = `${Date.now()}`;
 
-  @ApiOperation({ summary: 'Получение ответа с SSE' })
-  @ApiQuery({ name: 'streamId', example: '5-1732887598350', required: true })
-  @ApiQuery({ name: 'token', example: 'token', required: true })
-  @ApiResponse({ status: 200, example: { data: 'chunk' } })
-  @ApiResponse({ status: 404, example: 'Stream not found' })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  @UseGuards(SseUserGuard)
-  @Sse('stream')
-  stream(@Query('streamId') streamId: string) {
-    return this.aiService.getStream(streamId);
+    try {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      req.on('close', () => {
+        this.logger.warn(`Stream ${streamId} aborted`);
+        this.aiService.abortStream(streamId);
+        res.end();
+      });
+
+      await this.aiService.generateStream(
+        dto.userId,
+        dto.message,
+        dto.model,
+        (chunk) => {
+          res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+        },
+      );
+
+      res.end();
+    } catch (error) {
+      this.logger.error(`Stream error: ${error.message}`);
+      res.write(
+        `event: error\ndata: ${JSON.stringify({ error: error.message })}\n\n`,
+      );
+      res.end();
+    }
   }
 }

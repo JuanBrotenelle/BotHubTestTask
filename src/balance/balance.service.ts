@@ -35,10 +35,8 @@ export class BalanceService {
     }
   }
 
-  async aiTokenBuy(streamId: string, value: number): Promise<void> {
+  async aiTokenBuy(userId: number, value: number): Promise<void> {
     try {
-      const userId = streamId.split('-')[0];
-
       const balance = await this.balanceRepository.findOne({
         where: { userId },
       });

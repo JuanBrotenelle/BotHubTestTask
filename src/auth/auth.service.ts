@@ -6,7 +6,7 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 
@@ -39,7 +39,7 @@ export class AuthService {
     }
   }
 
-  async register(userDto: CreateUserDto): Promise<object> {
+  async register(userDto: CreateUserDto): Promise<HttpStatus> {
     try {
       const user = await this.usersService.findOne(userDto);
 
@@ -57,7 +57,7 @@ export class AuthService {
         throw new HttpException('User not created', 400);
       }
 
-      return HttpCode(HttpStatus.CREATED);
+      return HttpStatus.CREATED;
     } catch (e) {
       console.log(e);
       throw new HttpException('User not found', 404);

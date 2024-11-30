@@ -32,7 +32,6 @@ export class SseUserGuard implements CanActivate {
       }
 
       const user = this.jwtService.decode(token);
-      console.log(user);
 
       return Number(userId) === Number(user.id);
     } catch (e) {

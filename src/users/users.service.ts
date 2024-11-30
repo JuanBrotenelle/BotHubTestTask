@@ -1,4 +1,9 @@
-import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './users.model';
@@ -62,6 +67,23 @@ export class UsersService {
         },
       });
       return user;
+    } catch (e) {
+      console.log(e);
+      throw new BadRequestException();
+    }
+  }
+
+  async makeAdmin(userDto: CreateUserDto): Promise<HttpStatus> {
+    try {
+      const user = await this.findOne(userDto);
+
+      if (!user) throw new HttpException('User not found', 404);
+
+      user.role = 'admin';
+
+      user.save();
+
+      return HttpStatus.OK;
     } catch (e) {
       console.log(e);
       throw new BadRequestException();

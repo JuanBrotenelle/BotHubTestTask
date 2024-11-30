@@ -31,7 +31,6 @@
     "@nestjs/swagger": "^8.0.7",
     "@types/pino": "^7.0.4",
     "@types/uuid": "^10.0.0",
-    "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "mysql2": "^3.11.4",
     "openai": "^4.73.1",

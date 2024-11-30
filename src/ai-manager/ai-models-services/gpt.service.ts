@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 import { CountTokenCost } from '../token-cost.service';
-import { encoding_for_model } from '@dqbd/tiktoken';
+import { Subject } from 'rxjs';
 
 @Injectable()
 export class AiGptService {
@@ -18,8 +18,9 @@ export class AiGptService {
     prompt: string,
     onChunk: (chunk: string) => void,
     countCost: (cost: number) => void,
+    abortSignal: Subject<void>,
   ): Promise<void> {
-    const inputTokens = await this.tokenHandler.countTokens(prompt, this.model);
+    const inputTokens = this.tokenHandler.countTokens(prompt, this.model);
 
     const openai = new OpenAI({
       apiKey: process.env.GPT_API_KEY,
@@ -30,22 +31,31 @@ export class AiGptService {
       model: this.model,
       messages: [{ role: 'user', content: prompt }],
       stream: true,
-      stream_options: { include_usage: true },
+    });
+
+    let isAborted = false;
+
+    const abortSubscription = abortSignal.subscribe(() => {
+      stream.controller.abort();
+      isAborted = true;
     });
 
     const tempContentArray = [];
 
     try {
       for await (const chunk of stream) {
+        if (isAborted) {
+          break;
+        }
         if (chunk.choices[0]?.delta?.content) {
           const content = chunk.choices[0].delta.content;
-
           onChunk(content);
           tempContentArray.push(content);
         }
       }
     } finally {
       stream.tee();
+      abortSubscription.unsubscribe();
     }
 
     let totalOutputTokens = 0;
